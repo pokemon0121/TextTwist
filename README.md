@@ -1,7 +1,9 @@
 
-- Simple Text Twist Game -
+- Simple Text Twist Game
 
 This game is based on a small dictionary, which maps certain letter combinations to the words that can be formed from the combination.
+
+- Implementation details
 
 Implemented using jQuery in front end code, php in back-end code, and AJAX is used to pass requests from front to back.
 
@@ -9,7 +11,7 @@ UI design and logic in both ends are accomplished... for now.
 
 Functional updates can be done.
 
-- Todo -
+- Todo
 
 Add a shuffle botton to shuffle the rack to inspire players.
 
