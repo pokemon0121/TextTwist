@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title> Simple Text Twist </title>
+        <style>
+            .cell {
+                width: 250px;
+                height: 20px;
+                clear: both;
+            }
+            
+            .letter {
+                margin: 2.5px;
+                background-color: #e37f83;
+                position: relative;
+                width: 20px;
+                height: 20px;
+                float: left;
+                text-align: center;
+                color: white;
+            }
+            
+            .remain-num-text {
+                font-size: 50px;
+            }
+            
+            #d0 {
+                width: 100%;
+                height: 70px;
+                margin: 0px;
+            }
+            #form-wrapper {
+                width: 65%;
+                height: inherit;
+                padding-top: 20px;
+                float: left;
+                vertical-align: middle;
+            }
+            #remain-title {
+                width: 35%;
+                height: inherit;
+                padding-top: 20px;
+                text-align: center;
+                float: left;
+                clear: right;
+            }
+            
+            #box {
+                width: 100%;
+                height: 80px;
+                margin: 0px;
+            }
+            
+            #taunt {
+                width: 65%;
+                height: inherit;
+                float: left;
+            }
+            
+            #remain-num {
+                width: 35%;
+                height: inherit;
+                float: left;
+                clear: right;
+                text-align: center;
+            }
+            
+        </style>
+        <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
+        <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+        <script>
+            /* global $ */
+            $(document).ready(function () {
+                $('#formID').submit(function (e) {
+                    e.preventDefault();
+                    $('#p0').html('let us see if it could possibly be correct...' + '<br/>' + 'be patient...');
+                    var serializedData = $('#user_input').serialize();
+                    console.log(serializedData);
+                    $.ajax({
+                        type: "post",
+                        url: 'judge.php',
+                        data: serializedData,
+                        success: function (data) {
+                            var i;
+                            data = JSON.parse(data);
+                            console.log(data);
+                            if (data['correct'] == 1) {
+                                $('#p0').html('you made a guess. good.' + '<br/>'
+                                    + 'and it is right.');
+                                for (i = 0; i < data['word_len']; i++) {
+                                    $('#word' + data['index']).children('#l' + i).css('background', '#00cc44');
+                                    $('#word' + data['index']).children('#l' + i).text(data['word'].charAt(i));
+                                }
+                                $('#remain-num').html(data['remained']);
+                            }
+                            else if (data['correct'] == 0) {
+                                $('#p0').html('you made a guess. good.' + '<br/>'
+                                    + 'though it is wrong.');
+                            }
+                            else if (data['correct'] == -1) {
+                                $('#p0').html("don't be stupid, you have guessed this one." + '<br/>'
+                                    + 'type a different guess, will you?');
+                            }
+                            else if (data['correct'] == 2) {
+                                $('#p0').html("well done! you've got them all!" + '<br/>'
+                                    + 'no need to stay here, you can leave or start a new game.' + '<br/>'
+                                    + 'so, close, or refresh.' + '<br/>'
+                                );
+                                for (i = 0; i < data['word_len']; i++) {
+                                    $('#word' + data['index']).children('#l' + i).css('background', '#00cc44');
+                                    $('#word' + data['index']).children('#l' + i).text(data['word'].charAt(i));
+                                }
+                                $('#d0').hide();
+                                $('#hr2').hide();
+                                $('#remain-num').html("");
+                            }
+                            else if (data['correct'] == 3) {
+                                $('#p0').html("you did not type anything." + '<br/>'
+                                    + "don't be silly. type something.");
+                            }
+                            else if (data['correct'] == 4) {
+                                $('#p0').html("are you mad?" + '<br/>'
+                                    + "do not type that long!");
+                            }
+                            else {
+                                $('#p0').html('you should not have seen this...');
+                            }
+                            $('#formID').trigger('reset');
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            console.error(jqXHR);
+                        }
+                    });
+                });
+                $('#start').click(function (e) {
+                    $('#start').hide();
+                    $('#hr1').show();
+                    $('#loadingText').show();
+                    $.ajax({
+                        type: 'post',
+                        url: 'backend.php',
+                        success: function(data) {
+                            console.log(data);
+                            var i;
+                            $('#loadingText').html('build your word out of this now:');
+                            $('#rack').append("<div id = 'the_rack', class = 'cell'></div>");
+                            for (i = 0; i < data['root_rack'].length; i++) {
+                                $('#the_rack').append("<div id = 'l" + i + "', class = 'letter'>" + data['root_rack'].charAt(i) + "</div>");
+                                $('#the_rack').children('#l' + i).css('backgroundColor', '#4da6ff');
+                            }
+                            $('#rack').show();
+                            for (i = 0; i < data['answers_lengths'].length; i++) {
+                                $('#words').append("<div id = 'word" + i + "', class = 'cell'></div>");
+                                var j;
+                                for (j = 0; j < data['answers_lengths'][i]; j++) {
+                                    $('#word' + i).append("<div id = 'l" + j + "', class = 'letter'></div>");
+                                }
+                            }
+                            $('#remain-num').html(data['answers_count']);
+                            $('#p0').html('do not hesitate.' + '<br/>' + 'type in your guess.');
+                            $('#hr2').show();
+                            $('#d0').show();
+                            $('#remain-num').show();
+                        },
+                        error: function(jqXHR, textStatus, errorThrown) {
+                            console.error(JSON.stringify(jqXHR));
+                        }
+                    });
+                });
+            });
+        </script>
+    </head>
+    <body>
+        <h1 align = 'center'>
+            Simple Text Twist
+        </h1>
+        <hr>
+        <p id = 'start'>
+            <button type = "button" style = "height:30px">
+                <font size = '4'>Hit me to start and I can guarantee you that this is the only way to start</font>
+            </button>
+        </p>
+        <p id = 'loadingText' hidden>
+            loading your game...
+        </p>
+        <div id = 'rack' hidden></div>
+        <hr id = 'hr1'>
+        <div id = 'd0' hidden>
+            <div id = 'form-wrapper'>
+                <form id = "formID">
+                    INPUT YOUR GUESS, MORTAL:<br>
+                    <input id="user_input" type="text" name="guess" style="text-transform:uppercase" /><br>
+                    <input type="submit" value='as you wish'/>
+                </form>
+            </div>
+            <div id = 'remain-title'>
+                    <font size='6'>remaining words</font>
+            </div>
+        </div>
+        <hr id = 'hr2' hidden>
+        <div id = 'box'>
+            <div id = 'taunt'>
+                <p id = 'p0'>
+                    don't look at me, click the guy above if you are ready.
+                </p>
+            </div>
+            <div id = 'remain-num', class = 'remain-num-text' hidden></div>
+        </div>
+        <hr>
+        <div id = 'words'></div>
+    </body>
+</html>
